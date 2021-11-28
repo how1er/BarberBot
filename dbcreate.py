@@ -16,9 +16,9 @@ def createTables():
     query = ("""    
     CREATE TABLE Barbers(
         BarberId INTEGER PRIMARY KEY AUTOINCREMENT,
-        Price int NOT NULL,
-        Rating int NOT NULL,
-        OrderCount int NOT NULL
+        username VARCHAR(32) NOT NULL,
+        min_price int NOT NULL DEFAULT 0,
+        Rating int DEFAULT 0,
     );
     """)
     cursor.execute(query)
@@ -27,9 +27,10 @@ def createTables():
     query = ("""    
         CREATE TABLE Orders(
             OrderId INTEGER PRIMARY KEY AUTOINCREMENT,
-            chatId int NOT NULL,
+            order_time datetime NOT NULL,
+            chatId int DEFAULT NULL,
             barberId int NOT NULL,
-            Price int NOT NULL,
+            Price int NOT NULL DEFAULT 0,
             FOREIGN KEY(chatId) REFERENCES Clients(chatId)
             FOREIGN KEY(barberId) REFERENCES Barbers(barberId)
         );
