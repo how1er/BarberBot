@@ -25,3 +25,35 @@ def dbstart():  # Попытка подключения к БД, создани�
 
     except Exception as e:
         print("Connect error: ", e)
+
+
+def Barber_list_price():
+    """
+    Вывод списка барберов с их ценами
+    :return:
+    """
+    connection = connectDB()
+    cursor = connection.cursor()
+    query = "SELECT BarberName, Price FROM Barbers"
+    cursor.execute(query)
+    barbers = cursor.fetchall()
+    connection.close()
+    return barbers
+
+
+def check_new_client(chatid):
+    """
+    Проверка является ли пользователь новым
+    :param chatid: id пользователя
+    :return:
+    """
+    connection = connectDB()
+    cursor = connection.cursor()
+    query = ("SELECT chatId FROM Clients WHERE chatId = %s;" % chatid)
+    cursor.execute(query)
+    res = cursor.fetchall()
+    connection.close()
+    for i in res:
+        if chatid == i[0]:
+            return False
+    return True
