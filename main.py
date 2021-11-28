@@ -1,18 +1,22 @@
 import telebot
 import sqlite3
+from aiogram import types
+from db import dbstart
+
+bot = telebot.TeleBot('2120063146:AAGFdvPdx22l_DvrW4xejLaM7YUNvQwbyAc')
+
+
+@bot.message_handler(commands=['start'])
+def start_messages(message):
+    chatid = message.chat.id
+    bot.send_message(message.from_user.id, "Привет, напиши свое имя")
+
+
+@bot.message_handler(content_types=['text'])
+def get_text_messages(message):
+    bot.send_message(message.from_user.id, "Привет, " + message.text)
+
 
 if __name__ == '__main__':
-    bot = telebot.TeleBot('2120063146:AAHGg5YoKVWQUUvuD_uJoj8EfeeMmBBtFAg')
-
-
-    @bot.message_handler(content_types=['text'])
-    def get_text_messages(message):
-        if message.text == "Привет":
-            bot.send_message(message.from_user.id, "Привет, чем я могу тебе помочь?")
-        elif message.text == "/help":
-            bot.send_message(message.from_user.id, "Напиши привет")
-        else:
-            bot.send_message(message.from_user.id, "Я тебя не понимаю. Напиши /help.")
-
-
+    dbstart()
     bot.polling(none_stop=True, interval=0)
