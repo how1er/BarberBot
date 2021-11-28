@@ -28,8 +28,21 @@ def send_message(chatid, welcome_message, menu=None, markdown=True):
         return True
 
 
-def main_menu(chatid, message_id=False):
-    pass
+def mainmenu(chatid, message_id=False):
+    """
+    Формирование и отправка главного меню.
+    :param chatid: id пользователя, которому нужно отправить
+    :param message_id: если нужно отредактировать существующее сообщение, то отпредактирует его, иначе отправит новым сообщением
+    :return:
+    """
+    menu = types.InlineKeyboardMarkup()
+    menu.add(types.InlineKeyboardButton(text='✂Записаться на стрижку', callback_data='new_haircut'))
+    menu.add(types.InlineKeyboardButton(text='🗒История', callback_data='history'))
+    new_message = "_Главное меню_"
+    if not message_id:
+        send_message(chatid, new_message, menu)
+    else:
+        send_message(chatid, new_message, menu)
 
 def new_user(chatid):
     """

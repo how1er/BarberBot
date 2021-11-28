@@ -2,7 +2,7 @@ import telebot
 import sqlite3
 from aiogram import types
 from db import dbstart, check_new_client, Barber_list_price
-from manageControl import new_user
+from manageControl import new_user, mainmenu
 
 bot = telebot.TeleBot('2120063146:AAGFdvPdx22l_DvrW4xejLaM7YUNvQwbyAc')
 
@@ -14,7 +14,8 @@ def start_messages(message):
         new_user(chatid)
         # bot.send_message(message.from_user.id, "Добро пожаловать в BarberBot, напиши свое имя")
     else:
-        bot.send_message(message.from_user.id, "Привет, похоже ты тут уже был")
+        mainmenu(chatid)
+        # bot.send_message(message.from_user.id, "Привет, похоже ты тут уже был")
 
 
 @bot.message_handler(content_types=['text'])
@@ -24,6 +25,7 @@ def get_text_messages(message):
 
 @bot.callback_query_handler(func=lambda message: True)
 def answer(message):
+    chatid = message.message.chat.id
     if message.data == 'price_list':
         try:
             barbers = Barber_list_price()
@@ -31,6 +33,11 @@ def answer(message):
             for BarberName, Price in barbers:
                 barbers_list_message += str(BarberName) + ' ' + str(Price) + "\n"
             bot.send_message(message.from_user.id, barbers_list_message)
+        except Exception as e:
+            print(message.data + ' Error: ', e)
+    elif message.data == 'to_main_menu':
+        try:
+            mainmenu(chatid, message.message.message_id)
         except Exception as e:
             print(message.data + ' Error: ', e)
 
