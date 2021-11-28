@@ -16,6 +16,7 @@ def createTables():
     query = ("""    
     CREATE TABLE Barbers(
         BarberId INTEGER PRIMARY KEY AUTOINCREMENT,
+        BarberName VARCHAR(32) NOT NULL,
         Price int NOT NULL,
         Rating int NOT NULL,
         OrderCount int NOT NULL
@@ -34,5 +35,18 @@ def createTables():
             FOREIGN KEY(barberId) REFERENCES Barbers(barberId)
         );
         """)
+    cursor.execute(query)
+    connection.commit()
+
+    query = ("""    
+        DELETE FROM Barbers;
+        """)
+    cursor.execute(query)
+    connection.commit()
+
+    query = ("""    
+            INSERT INTO Barbers (BarberName, Price, Rating, OrderCount) VALUES ("Андрей", '900', '0', '0'), \
+            ("Артем", '1000', '0', '0'), ("Азамат", '800', '0', '0');
+            """)
     cursor.execute(query)
     connection.commit()
