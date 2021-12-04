@@ -16,10 +16,10 @@ def createTables():
 
     query = ("""    
     CREATE TABLE Barbers(
-        BarberId INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-        username VARCHAR(32) NOT NULL,
-        min_price int NOT NULL DEFAULT 0,
-        Rating int DEFAULT 0
+        barberId INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        barberName VARCHAR(32) NOT NULL,
+        price int NOT NULL DEFAULT 0,
+        rating int DEFAULT 0
     );
     """)
     cursor.execute(query)
@@ -27,14 +27,20 @@ def createTables():
 
     query = ("""    
         CREATE TABLE Orders(
-            OrderId INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+            orderId INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
             order_time datetime NOT NULL,
             chatId int DEFAULT NULL,
             barberId int NOT NULL,
-            Price int NOT NULL DEFAULT 0,
             FOREIGN KEY(chatId) REFERENCES Clients(chatId),
             FOREIGN KEY(barberId) REFERENCES Barbers(barberId)
         );
         """)
+    cursor.execute(query)
+    connection.commit()
+
+    query = ("""    
+            INSERT INTO Barbers (BarberName, Price) VALUES ("Андрей", '900'), \
+            ("Артем", '1000'), ("Азамат", '800');
+            """)
     cursor.execute(query)
     connection.commit()

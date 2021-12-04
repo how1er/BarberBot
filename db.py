@@ -27,7 +27,7 @@ def dbstart():  # Попытка подключения к БД, создани�
         print("Connect error: ", e)
 
 
-def insertClient(chatId, username):
+def insertClient(chatId, username = ''):
     """
     Добавление нового пользователя в БД
 
@@ -43,26 +43,28 @@ def insertClient(chatId, username):
     connection.close()
 
 
-def insertBarber(username):
+def insertBarber(barberName, price = 500):
     """
     Добавление нового барбека
 
-    :param username: username барбера в БД
+    :param barberName: имя барбера в БД
+    :param price: цена за работу
     :return:
     """
     connection = connectDB()
     cursor = connection.cursor()
-    query = ('INSERT INTO Barbers (username) VALUES (?);')
-    cursor.execute(query,[username])
+    query = ('INSERT INTO Barbers (barberName, price) VALUES (?,?);')
+    data_tuple = (barberName, price)
+    cursor.execute(query, data_tuple)
     connection.commit()
     connection.close()
 
 
-def insertOrder(order_time, BarberId):
+def insertOrder(order_time, barberId):
     """
     Добавление нового заказа в БД
 
-    :param BarberId: id барбера
+    :param barberId: id барбера
     :param order_time: время заказа
     :return:
     """
@@ -71,15 +73,15 @@ def insertOrder(order_time, BarberId):
     connection = connectDB()
     cursor = connection.cursor()
     query = """INSERT INTO 'Orders'
-                          ('order_time', 'BarberId')
+                          ('order_time', 'barberId')
                           VALUES (?, ?);"""
-    data_tuple = (order_time, BarberId)
+    data_tuple = (order_time, barberId)
     cursor.execute(query,data_tuple)
     connection.commit()
     connection.close()
 
 
-def IsNewClient(chatId):
+def isNewClient(chatId):
     """
     Проверка является ли пользователь новым
 
@@ -98,7 +100,7 @@ def IsNewClient(chatId):
     return True
 
 
-def isFreeOrder(order_time, BarberId):
+def isFreeOrder(order_time, barberId):
     """
     Проверка - занято ли место
 
@@ -109,17 +111,17 @@ def isFreeOrder(order_time, BarberId):
     """
     connection = connectDB()
     cursor = connection.cursor()
-    query = ("SELECT count(*) FROM Orders WHERE Orders.BarberId = BarberId and Orders.order_time = order_time and "
-             "Orders.chatId != NULL")
-    cursor.execute(query)
+    query = """SELECT chatId FROM Orders WHERE Orders.order_time = ? and Orders.barberId = ?"""
+    params_tuple = (order_time, barberId)
+    cursor.execute(query, params_tuple)
     res = cursor.fetchall()
     connection.close()
-    return res[0][0] != 1
+    return len(res) == 0
 
 
 def takeOrder(chatid, order_time, barberId):
     """
-    Занять место за пользователем с id chatid
+    Занять место за пользователем с id chatid, и добавить его ы твблицу клиентов, если это новый клиент
     :param chatid: id пользователя
     :return: 1 - success add
              0 - fail add
@@ -129,67 +131,106 @@ def takeOrder(chatid, order_time, barberId):
         connection = connectDB()
         cursor = connection.cursor()
 
-        #query = "UPDATE Orders SET chatid = "+ str(chatid) +  " WHERE order_time = " + \
-       #      str(order_time) + " and BarberId = " + str(BarberId) + ""
         query = """UPDATE Orders SET chatid = ? where order_time = ? and barberId = ?"""
-        data_tuple = (chatid, order_time,barberId)
+        data_tuple = (chatid, order_time ,barberId)
         cursor.execute(query, data_tuple)
         connection.commit()
         connection.close()
+        if isNewClient(chatId=chatid):
+            insertClient(chatId=chatid)
         return True
 
     return False
 
 
-def clearBarbers():
+def clearTable(table_name):
     """
-    Удаляем все строки таблицы Barbers
+    Удаляем все строки таблицы table_name
     :return:
     """
     connection = connectDB()
     cursor = connection.cursor()
-    query = ("DELETE FROM Barbers")
+    query = """DELETE FROM """ + str(table_name)
     cursor.execute(query)
     connection.commit()
     connection.close()
 
 
-def clearOrders():
+def columnLists(table_name):
     """
-    Удаляем все строки таблицы Orders
+    Посмотреть записи таблицы table_name
+    :param: table_name: название таблицы
+    :return: list of tables columns
+    """
+    connection = connectDB()
+    cursor = connection.cursor()
+    query = """select * from """ + str(table_name)
+    data_tuple = (table_name)
+    res = cursor.execute(query).fetchall()
+    connection.close()
+    return res
+
+
+def Barber_list_price():
+    """
+    Вывод списка барберов с их ценами
     :return:
     """
     connection = connectDB()
     cursor = connection.cursor()
-    query = ("DELETE FROM Orders")
+    query = "SELECT BarberName, Price FROM Barbers"
     cursor.execute(query)
-    connection.commit()
+    barbers = cursor.fetchall()
     connection.close()
+    return barbers
 
 
-def clearClients():
+def fillOrders(barberId, start, end, step=1):
     """
-    Удаляем все строки таблицы Clients
+    Создаёт заказы для барбера с iD = barberId
+    :param: barberId: id барбера
+    :type: int
+    :param start: время начало работы
+    :type: datetime.datetime
+    :param end: время конца работы
+    :type: datetime.datetime
+    :param step: время с которым будет ставить заказы, в часах
+    :type: datetime.datetime
     :return:
     """
+    delta_t = datetime.timedelta(hours= step)
+    ordered_time = start
+    while ordered_time < end:
+        insertOrder(ordered_time, barberId=barberId )
+        ordered_time += delta_t
+
+
+def barberFreeTime(barberId, years_day):
+    """
+    Возвращает список свободных мест для записи
+    :param barberId: id барбера
+    :param years_day: день года
+    :type: datetime.datetime(year, month, day)
+    :return: список времени
+    """
+    time_start = datetime.datetime(years_day.year, years_day.month, years_day.day, 0, 0)
+    time_end = datetime.datetime(years_day.year, years_day.month, years_day.day, 0, 0) + datetime.timedelta(1)
+
     connection = connectDB()
     cursor = connection.cursor()
-    query = ("DELETE FROM Clients")
-    cursor.execute(query)
-    connection.commit()
-    connection.close()
+    query = """select order_time from Orders where  ? <= order_time and order_time < ? 
+                                                    and barberId = ? and chatId is NULL """
+    params_tuple = (str(time_start), str(time_end), barberId)
+    res = cursor.execute(query, params_tuple).fetchall()
+    cursor.close()
+
+    return res
 
 
 
-a = "fsdfds"
-dt = datetime.datetime(2017, 3, 5, 12, 30, 10)
-#insertOrder(dt,100)
-print(connectDB().execute("select * from Clients").fetchall())
-print(connectDB().execute("select * from Barbers").fetchall())
-print(connectDB().execute("select * from Orders").fetchall())
-print(isFreeOrder(dt,100))
-print(takeOrder(999,dt,100))
-print(isFreeOrder(dt,100))
-print(connectDB().execute("select * from Orders").fetchall())
-#clearOrders()
-#print(connectDB().execute("select * from Orders").fetchall())
+time_s = datetime.datetime(2019, 5, 10, 10, 0)
+time_e = datetime.datetime(2019, 5, 10, 18, 0)
+dt = datetime.datetime(2019, 5, 10)
+
+print(columnLists("Orders"))
+print(barberFreeTime(1, dt))
