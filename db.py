@@ -27,7 +27,7 @@ def dbstart():  # Попытка подключения к БД, создани�
         print("Connect error: ", e)
 
 
-def insertClient(chatId, username = ''):
+def insertClient(chatId, username=''):
     """
     Добавление нового пользователя в БД
 
@@ -43,7 +43,7 @@ def insertClient(chatId, username = ''):
     connection.close()
 
 
-def insertBarber(barberName, price = 500):
+def insertBarber(barberName, price=500):
     """
     Добавление нового барбека
 
@@ -106,7 +106,7 @@ def isFreeOrder(order_time, barberId):
 
     :param BarberId: id барбера
     :param order_time: время заказа
-    :return: True - всободное место
+    :return: True - в сободное место
              False - занятое место
     """
     connection = connectDB()
@@ -165,7 +165,6 @@ def columnLists(table_name):
     connection = connectDB()
     cursor = connection.cursor()
     query = """select * from """ + str(table_name)
-    data_tuple = (table_name)
     res = cursor.execute(query).fetchall()
     connection.close()
     return res
@@ -226,11 +225,3 @@ def barberFreeTime(barberId, years_day):
 
     return res
 
-
-
-time_s = datetime.datetime(2019, 5, 10, 10, 0)
-time_e = datetime.datetime(2019, 5, 10, 18, 0)
-dt = datetime.datetime(2019, 5, 10)
-
-print(columnLists("Orders"))
-print(barberFreeTime(1, dt))
