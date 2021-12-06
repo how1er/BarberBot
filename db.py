@@ -2,6 +2,7 @@ import sqlite3 as db
 import dbcreate
 import datetime
 
+
 def connectDB():
     connection = db.connect('BarberBotDB.db')
     return connection
@@ -22,6 +23,19 @@ def dbstart():  # Попытка подключения к БД, создани�
             print('-' * 20 + "\nTables created:", tables)
         else:
             print('-' * 20 + "\nTables:", tables)
+        clearTable('Orders')
+        barbers = Barber_list_price()
+        year = datetime.datetime.today().year
+        month = datetime.datetime.today().month
+        day = datetime.datetime.today().day
+        start = datetime.datetime(year, month, day, 8)
+        end = datetime.datetime(year, month, day, 18)
+        for day in range(7):
+            for barberId, BarberName, Price in barbers:
+                fillOrders(str(barberId), start, end)
+            start += datetime.timedelta(days=1)
+            end += datetime.timedelta(days=1)
+
 
     except Exception as e:
         print("Connect error: ", e)
@@ -45,7 +59,7 @@ def insertClient(chatId, username=''):
 
 def insertBarber(barberName, price=500):
     """
-    Добавление нового барбека
+    Добавление нового барбера
 
     :param barberName: имя барбера в БД
     :param price: цена за работу
@@ -53,9 +67,8 @@ def insertBarber(barberName, price=500):
     """
     connection = connectDB()
     cursor = connection.cursor()
-    query = ('INSERT INTO Barbers (barberName, price) VALUES (?,?);')
-    data_tuple = (barberName, price)
-    cursor.execute(query, data_tuple)
+    query = ("INSERT INTO Barbers (barberName, price) VALUES ('" + str(barberName) + "', '" + str(price) + "');")
+    cursor.execute(query)
     connection.commit()
     connection.close()
 
@@ -69,14 +82,10 @@ def insertOrder(order_time, barberId):
     :return:
     """
 
-
     connection = connectDB()
     cursor = connection.cursor()
-    query = """INSERT INTO 'Orders'
-                          ('order_time', 'barberId')
-                          VALUES (?, ?);"""
-    data_tuple = (order_time, barberId)
-    cursor.execute(query,data_tuple)
+    query = ("INSERT INTO Orders (order_time, barberId) VALUES ('" + str(order_time) + "', '" + str(barberId) + "');")
+    cursor.execute(query)
     connection.commit()
     connection.close()
 
@@ -111,17 +120,34 @@ def isFreeOrder(order_time, barberId):
     """
     connection = connectDB()
     cursor = connection.cursor()
-    query = """SELECT chatId FROM Orders WHERE Orders.order_time = ? and Orders.barberId = ?"""
+    query = """SELECT chatId FROM Orders WHERE Orders.order_time = ? and Orders.barberId = ? and chatId IS NULL"""
     params_tuple = (order_time, barberId)
     cursor.execute(query, params_tuple)
     res = cursor.fetchall()
     connection.close()
-    return len(res) == 0
+    return len(res) != 0
+
+
+def History(chatId):
+    """
+    Вывод истории заказов
+
+    :param chatId: id пользователя
+    :return:
+    """
+    connection = connectDB()
+    cursor = connection.cursor()
+    query = """SELECT barberName, order_time, rating FROM Orders JOIN Barbers USING (barberId) 
+    WHERE chatId = ? ORDER BY order_time DESC"""
+    cursor.execute(query, (chatId,))
+    res = cursor.fetchall()
+    connection.close()
+    return res
 
 
 def takeOrder(chatid, order_time, barberId):
     """
-    Занять место за пользователем с id chatid, и добавить его ы твблицу клиентов, если это новый клиент
+    Занять место за пользователем с id chatid, и добавить его в таблицу клиентов, если это новый клиент
     :param chatid: id пользователя
     :return: 1 - success add
              0 - fail add
@@ -130,17 +156,40 @@ def takeOrder(chatid, order_time, barberId):
     if isFreeOrder(order_time, barberId):
         connection = connectDB()
         cursor = connection.cursor()
-
+        query0 = "SELECT orderId, order_time FROM Orders where order_time = ? and barberId = ?"
+        data_tuple0 = (order_time, barberId)
+        res = cursor.execute(query0, data_tuple0).fetchall()
+        res_str = ""
+        for orderId, order_time in res:
+            res_str = str(orderId)
+        connection.commit()
         query = """UPDATE Orders SET chatid = ? where order_time = ? and barberId = ?"""
-        data_tuple = (chatid, order_time ,barberId)
+        data_tuple = (chatid, order_time, barberId)
         cursor.execute(query, data_tuple)
         connection.commit()
         connection.close()
         if isNewClient(chatId=chatid):
             insertClient(chatId=chatid)
-        return True
+        return res_str
 
     return False
+
+
+def update_mark(orderId, Mark):
+    """
+    Занести оценку в бд
+    :param orderId: id заказа
+    :param Mark: оценка
+    :return:
+    """
+
+    connection = connectDB()
+    cursor = connection.cursor()
+    data_tuple = (Mark, orderId)
+    query = """UPDATE Orders SET rating = ? where orderId = ?"""
+    cursor.execute(query, data_tuple)
+    connection.commit()
+    connection.close()
 
 
 def clearTable(table_name):
@@ -166,6 +215,8 @@ def columnLists(table_name):
     cursor = connection.cursor()
     query = """select * from """ + str(table_name)
     res = cursor.execute(query).fetchall()
+    for i in res:
+        print(i)
     connection.close()
     return res
 
@@ -177,7 +228,7 @@ def Barber_list_price():
     """
     connection = connectDB()
     cursor = connection.cursor()
-    query = "SELECT BarberName, Price FROM Barbers"
+    query = "SELECT barberId, BarberName, Price FROM Barbers"
     cursor.execute(query)
     barbers = cursor.fetchall()
     connection.close()
@@ -197,10 +248,10 @@ def fillOrders(barberId, start, end, step=1):
     :type: datetime.datetime
     :return:
     """
-    delta_t = datetime.timedelta(hours= step)
+    delta_t = datetime.timedelta(hours=step)
     ordered_time = start
     while ordered_time < end:
-        insertOrder(ordered_time, barberId=barberId )
+        insertOrder(ordered_time, barberId=barberId)
         ordered_time += delta_t
 
 
@@ -218,10 +269,9 @@ def barberFreeTime(barberId, years_day):
     connection = connectDB()
     cursor = connection.cursor()
     query = """select order_time from Orders where  ? <= order_time and order_time < ? 
-                                                    and barberId = ? and chatId is NULL """
+                                                        and barberId = ? and chatId is NULL """
     params_tuple = (str(time_start), str(time_end), barberId)
     res = cursor.execute(query, params_tuple).fetchall()
     cursor.close()
 
     return res
-
