@@ -1,11 +1,29 @@
-import datetime
+from multiprocessing.context import Process
+from threading import Thread
 
+import schedule
 import telebot
-from db import dbstart, isNewClient
+import time
+
+from db import dbstart, db_update, isNewClient, columnLists
 from manageControl import new_user, mainmenu, barber_list, select_barber, select_day, select_time, new_order, waiting, \
     set_mark, add_mark_to_db, history_menu, instructions
 
 bot = telebot.TeleBot('2120063146:AAGFdvPdx22l_DvrW4xejLaM7YUNvQwbyAc')
+
+
+class ScheduleUpdate():
+    def try_update_db(self):
+        schedule.every().day.at("07:00").do(p.schedule_update)
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
+
+    def schedule_update(self):
+        db_update()
+
+    def start_process(self):  # Запуск Process
+        Thread(target=self.try_update_db, args=()).start()
 
 
 @bot.message_handler(commands=['start'])
@@ -104,6 +122,14 @@ def answer(message):
 
 if __name__ == '__main__':
     dbstart()
-    #columnLists('Barbers')
-    #barberFreeTime(1, datetime.datetime.today())
-    bot.polling(none_stop=True, interval=0)
+    p = ScheduleUpdate()
+    p.start_process()
+    # columnLists('Orders')
+    # db_update()
+    # columnLists('Orders')
+    # columnLists('Barbers')
+    # barberFreeTime(1, datetime.datetime.today())
+    try:
+        bot.polling(none_stop=True, interval=0)
+    except Exception as e:
+        print(' Error: ', e)
