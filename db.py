@@ -234,6 +234,20 @@ def Barber_list_price():
     connection.close()
     return barbers
 
+def Barber_mark(barberId):
+    """
+    Вывод средней оценки барбера
+    :param: table_name: название таблицы
+    :return:
+    """
+    connection = connectDB()
+    cursor = connection.cursor()
+    query = "SELECT barberId, AVG(rating) FROM Orders WHERE rating <> 0 and barberId = ? GROUP BY barberId"
+    cursor.execute(query, (barberId,))
+    marks = cursor.fetchall()
+    connection.close()
+    return marks
+
 
 def fillOrders(barberId, start, end, step=1):
     """

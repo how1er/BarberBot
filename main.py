@@ -1,11 +1,9 @@
 import datetime
 
 import telebot
-import sqlite3
-from aiogram import types
-from db import dbstart, isNewClient, Barber_list_price, columnLists, barberFreeTime
+from db import dbstart, isNewClient
 from manageControl import new_user, mainmenu, barber_list, select_barber, select_day, select_time, new_order, waiting, \
-    set_mark, add_mark_to_db, history_menu
+    set_mark, add_mark_to_db, history_menu, instructions
 
 bot = telebot.TeleBot('2120063146:AAGFdvPdx22l_DvrW4xejLaM7YUNvQwbyAc')
 
@@ -15,10 +13,8 @@ def start_messages(message):
     chatid = message.chat.id
     if isNewClient(chatid):
         new_user(chatid)
-        # bot.send_message(message.from_user.id, "Добро пожаловать в BarberBot, напиши свое имя")
     else:
         mainmenu(chatid)
-        # bot.send_message(message.from_user.id, "Привет, похоже ты тут уже был")
 
 
 @bot.message_handler(content_types=['text'])
@@ -97,6 +93,11 @@ def answer(message):
     elif 'history' in message.data:
         try:
             history_menu(chatid, message.message.message_id)
+        except Exception as e:
+            print(message.data + ' Error: ', e)
+    elif 'instructions' in message.data:
+        try:
+            instructions(chatid, message.message.message_id)
         except Exception as e:
             print(message.data + ' Error: ', e)
 
