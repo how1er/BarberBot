@@ -30,11 +30,13 @@ def dbstart():  # Попытка подключения к БД, создани�
         day = datetime.datetime.today().day
         start = datetime.datetime(year, month, day, 8)
         end = datetime.datetime(year, month, day, 18)
-        for day in range(7):
-            for barberId, BarberName, Price in barbers:
-                fillOrders(str(barberId), start, end)
-            start += datetime.timedelta(days=1)
-            end += datetime.timedelta(days=1)
+        all_data = columnLists('Orders')
+        if len(all_data) == 0:
+            for day in range(7):
+                for barberId, BarberName, Price in barbers:
+                    fillOrders(str(barberId), start, end)
+                start += datetime.timedelta(days=1)
+                end += datetime.timedelta(days=1)
 
 
     except Exception as e:

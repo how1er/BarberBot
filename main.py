@@ -111,6 +111,7 @@ def answer(message):
     elif 'history' in message.data:
         try:
             history_menu(chatid, message.message.message_id)
+            columnLists("Orders")
         except Exception as e:
             print(message.data + ' Error: ', e)
     elif 'instructions' in message.data:
@@ -124,11 +125,7 @@ if __name__ == '__main__':
     dbstart()
     p = ScheduleUpdate()
     p.start_process()
-    # columnLists('Orders')
-    # db_update()
-    # columnLists('Orders')
-    # columnLists('Barbers')
-    # barberFreeTime(1, datetime.datetime.today())
+    #columnLists("Orders")
     try:
         bot.polling(none_stop=True, interval=0)
     except Exception as e:
