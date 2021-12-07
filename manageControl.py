@@ -135,7 +135,7 @@ def instructions(chatid, message_id=False):
         выберите пункт меню: ЗАПИСАТЬСЯ НА СТРИЖКУ.\n\n Далее выберите барбера, а также желаемую дату и время, \
      после чего бот войдет в режим ожидания окончания стрижки. \n\n Когда она закончится выберите пункт: ДА \
 и поставьте оценку барберу. \n\n Отслеживать историю посещений можно в пункте: ИСТОРИЯ."
-    menu.add(types.InlineKeyboardButton(text='Назад', callback_data='to_main_menu'))
+    menu.add(types.InlineKeyboardButton(text='Назад', callback_data='back_to_welcome'))
     if not message_id:
         send_message(chatid, instructions_message, menu)
     else:

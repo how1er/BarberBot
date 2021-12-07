@@ -23,7 +23,7 @@ def dbstart():  # Попытка подключения к БД, создани�
             print('-' * 20 + "\nTables created:", tables)
         else:
             print('-' * 20 + "\nTables:", tables)
-        clearTable('Orders')
+        # clearTable('Orders')
         barbers = Barber_list_price()
         year = datetime.datetime.today().year
         month = datetime.datetime.today().month
@@ -35,6 +35,36 @@ def dbstart():  # Попытка подключения к БД, создани�
                 fillOrders(str(barberId), start, end)
             start += datetime.timedelta(days=1)
             end += datetime.timedelta(days=1)
+
+
+    except Exception as e:
+        print("Connect error: ", e)
+
+
+def db_update():  # Ежедневное добавление заказов
+    try:
+        connection = connectDB()
+        print("Successfully connected to DB")
+        cursor = connection.cursor()
+        cursor.execute('SELECT name from sqlite_master where type= "table"')
+        tables = cursor.fetchall()
+
+        if not tables:
+            dbcreate.createTables()
+            cursor.execute('SELECT name from sqlite_master where type= "table"')
+            tables = cursor.fetchall()
+            print('-' * 20 + "\nTables created:", tables)
+        else:
+            print('-' * 20 + "\nTables:", tables)
+        # clearTable('Orders')
+        barbers = Barber_list_price()
+        year = datetime.datetime.today().year
+        month = datetime.datetime.today().month
+        day = datetime.datetime.today().day
+        start = datetime.datetime(year, month, day, 8) + datetime.timedelta(days=7)
+        end = datetime.datetime(year, month, day, 18) + datetime.timedelta(days=7)
+        for barberId, BarberName, Price in barbers:
+            fillOrders(str(barberId), start, end)
 
 
     except Exception as e:
@@ -233,6 +263,7 @@ def Barber_list_price():
     barbers = cursor.fetchall()
     connection.close()
     return barbers
+
 
 def Barber_mark(barberId):
     """
