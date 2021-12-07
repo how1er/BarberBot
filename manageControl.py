@@ -1,7 +1,7 @@
 import telebot
 import datetime
 from telebot import types
-from db import Barber_list_price, barberFreeTime, takeOrder, columnLists, isFreeOrder, update_mark, History
+from db import Barber_list_price, barberFreeTime, takeOrder, columnLists, isFreeOrder, update_mark, History, Barber_mark
 
 bot = telebot.TeleBot('2120063146:AAGFdvPdx22l_DvrW4xejLaM7YUNvQwbyAc')
 
@@ -89,7 +89,12 @@ def barber_list(chatid, message_id=False):
     barbers = Barber_list_price()
     barbers_list_message = ""
     for barberId, BarberName, Price in barbers:
-        barbers_list_message += str(BarberName) + ": " + str(Price) + "р." + "\n"
+        mark = Barber_mark(barberId)
+        if len(mark) != 0:
+            for bId, AVG in mark:
+                barbers_list_message += str(BarberName) + ": " + str(Price) + "р. Средняя оценка: " + str(AVG) + "\n"
+        else:
+            barbers_list_message += str(BarberName) + ": " + str(Price) + "р. Средняя оценка: 0" + "\n"
     if not message_id:
         send_message(chatid, barbers_list_message, menu)
     else:
@@ -114,6 +119,27 @@ def select_barber(chatid, message_id=False):
         send_message(chatid, select_barber_message, menu)
     else:
         edit_message(chatid, message_id, select_barber_message, menu, markdown=True)
+
+def instructions(chatid, message_id=False):
+    """
+    Инструкция
+    :param chatid: id пользователя, которому нужно отправить
+    :param message_id: если нужно отредактировать существующее сообщение, то отпредактирует его, иначе отправит новым сообщением
+    :return:
+    """
+
+    menu = types.InlineKeyboardMarkup()
+    barbers = Barber_list_price()
+    instructions_message = "Чтобы ознакомиться со списком барберов, их ценами и средними оценками \
+выберите пункт меню: ПРАЙС ЛИСТ.\n\nЧтобы записаться на стрижку и перейти к выбору времени \
+        выберите пункт меню: ЗАПИСАТЬСЯ НА СТРИЖКУ.\n\n Далее выберите барбера, а также желаемую дату и время, \
+     после чего бот войдет в режим ожидания окончания стрижки. \n\n Когда она закончится выберите пункт: ДА \
+и поставьте оценку барберу. \n\n Отслеживать историю посещений можно в пункте: ИСТОРИЯ."
+    menu.add(types.InlineKeyboardButton(text='Назад', callback_data='to_main_menu'))
+    if not message_id:
+        send_message(chatid, instructions_message, menu)
+    else:
+        edit_message(chatid, message_id, instructions_message, menu, markdown=True)
 
 
 def select_day(chatid, message_id=False, barber=""):
